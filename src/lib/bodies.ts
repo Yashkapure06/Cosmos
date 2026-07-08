@@ -27,9 +27,16 @@ export type BodyId =
   | "voyager2"
   | "newhorizons"
   | "jwst"
-  | "parker";
+  | "parker"
+  | "ceres"
+  | "vesta"
+  | "pallas"
+  | "hygiea"
+  | "interamnia"
+  | "davida"
+  | "blackhole";
 
-export type BodyType = "star" | "planet" | "moon" | "craft";
+export type BodyType = "star" | "planet" | "moon" | "craft" | "asteroid" | "blackhole";
 
 /** circular-orbit approximation for moons astronomy-engine doesn't cover */
 export interface ApproxOrbit {
@@ -39,6 +46,19 @@ export interface ApproxOrbit {
   periodDays: number;
   /** arbitrary-but-stable phase offset, rad */
   phase: number;
+}
+
+/** heliocentric Keplerian elements (J2000 ecliptic) for minor bodies that
+ *  astronomy-engine doesn't ship. Mean motion is derived from `aAu`. */
+export interface HelioElements {
+  aAu: number;
+  e: number;
+  iDeg: number;
+  nodeDeg: number;
+  argDeg: number;
+  m0Deg: number;
+  /** epoch of m0, ms since Unix epoch (J2000 = 946728000000) */
+  epochMs: number;
 }
 
 export interface BodyDef {
@@ -61,11 +81,29 @@ export interface BodyDef {
   rim?: string;
   ringed?: boolean;
   approxOrbit?: ApproxOrbit;
+  /** minor bodies: heliocentric orbit driven by these elements */
+  helioElements?: HelioElements;
+  /** deep-space object pinned at a fixed heliocentric point, scene units */
+  fixedHelioUnits?: [number, number, number];
+  /** asteroid only: which downloaded rock texture set (0-9) to skin it with */
+  rockIndex?: number;
   /** spacecraft only: for the ticker's years-in-flight line */
   launchYear?: number;
 }
 
 const KM = 1 / EARTH_RADIUS_KM;
+
+// Direction of Sagittarius A* (galactic centre) mapped into scene coords, and
+// the distance we pin our black hole out at -- deep space, but reachable.
+const SGRA_DIR = ((): [number, number, number] => {
+  const ra = (266.417 * Math.PI) / 180;
+  const dec = (-28.936 * Math.PI) / 180;
+  const x = Math.cos(dec) * Math.cos(ra);
+  const y = Math.cos(dec) * Math.sin(ra);
+  const z = Math.sin(dec);
+  return [x, z, -y]; // EQJ -> scene (x, z, -y)
+})();
+const BH_DIST = 600000;
 
 export const BODIES: Record<BodyId, BodyDef> = {
   sun: {
@@ -340,6 +378,87 @@ export const BODIES: Record<BodyId, BodyDef> = {
     color: "#ff8a5c",
     launchYear: 2018,
   },
+
+  // Main-belt dwarf planet + the largest asteroids: real orbits, visitable and
+  // focusable exactly like the planets, skinned with the real rock textures.
+  ceres: {
+    id: "ceres",
+    label: "Ceres",
+    type: "asteroid",
+    parent: "sun",
+    radius: 469.7 * KM,
+    color: "#8a8178",
+    rotationHours: 9.074,
+    rockIndex: 9,
+    helioElements: { aAu: 2.7691, e: 0.076, iDeg: 10.594, nodeDeg: 80.393, argDeg: 73.597, m0Deg: 95.989, epochMs: 946728000000 },
+  },
+  vesta: {
+    id: "vesta",
+    label: "Vesta",
+    type: "asteroid",
+    parent: "sun",
+    radius: 262.7 * KM,
+    color: "#b7a98f",
+    rotationHours: 5.342,
+    rockIndex: 6,
+    helioElements: { aAu: 2.3615, e: 0.0887, iDeg: 7.14, nodeDeg: 103.81, argDeg: 151.2, m0Deg: 307.8, epochMs: 946728000000 },
+  },
+  pallas: {
+    id: "pallas",
+    label: "Pallas",
+    type: "asteroid",
+    parent: "sun",
+    radius: 256 * KM,
+    color: "#9a978f",
+    rotationHours: 7.813,
+    rockIndex: 2,
+    helioElements: { aAu: 2.7721, e: 0.2302, iDeg: 34.837, nodeDeg: 173.024, argDeg: 310.202, m0Deg: 40.6, epochMs: 946728000000 },
+  },
+  hygiea: {
+    id: "hygiea",
+    label: "Hygiea",
+    type: "asteroid",
+    parent: "sun",
+    radius: 217 * KM,
+    color: "#6f6a61",
+    rotationHours: 13.83,
+    rockIndex: 0,
+    helioElements: { aAu: 3.1415, e: 0.1125, iDeg: 3.8316, nodeDeg: 283.2, argDeg: 312.3, m0Deg: 152.2, epochMs: 946728000000 },
+  },
+  interamnia: {
+    id: "interamnia",
+    label: "Interamnia",
+    type: "asteroid",
+    parent: "sun",
+    radius: 166 * KM,
+    color: "#7c766c",
+    rotationHours: 8.727,
+    rockIndex: 8,
+    helioElements: { aAu: 3.0627, e: 0.1553, iDeg: 17.3, nodeDeg: 280.3, argDeg: 95.7, m0Deg: 200, epochMs: 946728000000 },
+  },
+  davida: {
+    id: "davida",
+    label: "Davida",
+    type: "asteroid",
+    parent: "sun",
+    radius: 145 * KM,
+    color: "#a3937a",
+    rotationHours: 5.129,
+    rockIndex: 3,
+    helioElements: { aAu: 3.1685, e: 0.1861, iDeg: 15.938, nodeDeg: 107.6, argDeg: 337.2, m0Deg: 100, epochMs: 946728000000 },
+  },
+
+  // A visitable black hole, pinned in the direction of Sagittarius A*. Fly to
+  // it and orbit it like any body; the render (BlackHole.tsx) gives the disk.
+  blackhole: {
+    id: "blackhole",
+    label: "Sagittarius A*",
+    type: "blackhole",
+    parent: "sun",
+    radius: 60, // event-horizon radius, scene units (a deliberately dramatic size)
+    color: "#c9a3ff",
+    fixedHelioUnits: [SGRA_DIR[0] * BH_DIST, SGRA_DIR[1] * BH_DIST, SGRA_DIR[2] * BH_DIST],
+  },
 };
 
 export const BODY_IDS = Object.keys(BODIES) as BodyId[];
@@ -353,6 +472,8 @@ export function handoffIn(id: BodyId): number {
   if (b.type === "star") return 800;
   if (b.type === "planet") return Math.max(6, b.radius * 12);
   if (b.type === "craft") return 1.2;
+  if (b.type === "asteroid") return Math.max(2.5, b.radius * 25);
+  if (b.type === "blackhole") return b.radius * 30;
   return Math.max(1.5, b.radius * 10);
 }
 
@@ -362,15 +483,24 @@ export function releaseRadius(id: BodyId): number {
   if (b.type === "star") return Infinity;
   if (b.type === "planet") return Math.max(45, b.radius * 60);
   if (b.type === "craft") return 15;
+  if (b.type === "asteroid") return Math.max(30, b.radius * 120);
+  if (b.type === "blackhole") return b.radius * 200;
   return Math.max(20, b.radius * 60);
 }
 
 export function minCameraDistance(id: BodyId): number {
   if (BODIES[id].type === "craft") return 0.02;
+  // never let the camera cross the event horizon
+  if (BODIES[id].type === "blackhole") return BODIES[id].radius * 1.15;
   return Math.max(0.02, BODIES[id].radius * 1.25);
 }
 
 export function viewDistance(id: BodyId): number {
-  if (BODIES[id].type === "craft") return 0.35;
-  return Math.max(0.5, BODIES[id].radius * 3.4);
+  const b = BODIES[id];
+  if (b.type === "craft") return 0.35;
+  // asteroids are small: pull the camera in close so the stone fills the view
+  if (b.type === "asteroid") return Math.max(0.12, b.radius * 3);
+  // frame the whole accretion disk, which extends to ~4.3x the horizon radius
+  if (b.type === "blackhole") return b.radius * 9;
+  return Math.max(0.5, b.radius * 3.4);
 }

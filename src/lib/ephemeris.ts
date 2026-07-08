@@ -8,9 +8,56 @@ import { EARTH_RADIUS_KM } from "./constants";
 import { BODIES, BODY_IDS, CRAFT_IDS, type BodyId } from "./bodies";
 import { craftPositionUnits } from "./spacecraft";
 
+import type { HelioElements } from "./bodies";
+
 const AU_KM = 149597870.7;
 const AU_TO_UNITS = AU_KM / EARTH_RADIUS_KM;
 const KM_TO_UNITS = 1 / EARTH_RADIUS_KM;
+
+const DEG = Math.PI / 180;
+const YEAR_MS = 365.25 * 86400_000;
+const OBLIQUITY = 23.4392811 * DEG; // mean obliquity J2000, ecliptic -> EQJ
+const COS_EPS = Math.cos(OBLIQUITY);
+const SIN_EPS = Math.sin(OBLIQUITY);
+
+/** Heliocentric position from J2000 Keplerian elements, scene units, EQJ-mapped
+ *  (matches the belt's asteroidPositionUnits so named + field rocks share a frame). */
+export function helioElementsUnits(
+  el: HelioElements,
+  timeMs: number,
+  target: THREE.Vector3,
+): THREE.Vector3 {
+  const a = el.aAu * AU_TO_UNITS;
+  const e = el.e;
+  const periodMs = Math.pow(el.aAu, 1.5) * YEAR_MS;
+  const n = (Math.PI * 2) / periodMs;
+  let M = (el.m0Deg * DEG + n * (timeMs - el.epochMs)) % (Math.PI * 2);
+  if (M < 0) M += Math.PI * 2;
+
+  let E = M;
+  for (let k = 0; k < 5; k++) E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+  const cosE = Math.cos(E);
+  const sinE = Math.sin(E);
+  const r = a * (1 - e * cosE);
+  const nu = Math.atan2(Math.sqrt(1 - e * e) * sinE, cosE - e);
+
+  const cosO = Math.cos(el.nodeDeg * DEG);
+  const sinO = Math.sin(el.nodeDeg * DEG);
+  const cosI = Math.cos(el.iDeg * DEG);
+  const sinI = Math.sin(el.iDeg * DEG);
+  const wv = el.argDeg * DEG + nu;
+  const cosWv = Math.cos(wv);
+  const sinWv = Math.sin(wv);
+
+  const xEcl = r * (cosO * cosWv - sinO * sinWv * cosI);
+  const yEcl = r * (sinO * cosWv + cosO * sinWv * cosI);
+  const zEcl = r * (sinWv * sinI);
+
+  const xEq = xEcl;
+  const yEq = yEcl * COS_EPS - zEcl * SIN_EPS;
+  const zEq = yEcl * SIN_EPS + zEcl * COS_EPS;
+  return target.set(xEq, zEq, -yEq);
+}
 
 const AE_BODY: Partial<Record<BodyId, Body>> = {
   mercury: Body.Mercury,
@@ -96,6 +143,15 @@ export class HelioTable {
         eqjToScene(v.x * AU_TO_UNITS, v.y * AU_TO_UNITS, v.z * AU_TO_UNITS, this.pos[id]);
       }
       this.pos.sun.set(0, 0, 0);
+
+      // named minor bodies (Ceres, Vesta, ...) crawl along their orbits; the
+      // coarse cadence is plenty and keeps the per-frame path cheap
+      for (const id of BODY_IDS) {
+        const el = BODIES[id].helioElements;
+        if (el) helioElementsUnits(el, timeMs, this.pos[id]);
+        const fp = BODIES[id].fixedHelioUnits;
+        if (fp) this.pos[id].set(fp[0], fp[1], fp[2]);
+      }
     }
 
     const focusParent = BODIES[focus].parent;
@@ -175,6 +231,23 @@ export function planetOrbitPath(id: BodyId, timeMs: number, samples = 180): Floa
     points[j] = v.x * AU_TO_UNITS;
     points[j + 1] = v.z * AU_TO_UNITS;
     points[j + 2] = -v.y * AU_TO_UNITS;
+  }
+  return points;
+}
+
+/** Full heliocentric ellipse for a named minor body, scene units. */
+export function asteroidOrbitPath(id: BodyId, samples = 220): Float32Array {
+  const el = BODIES[id].helioElements;
+  const points = new Float32Array((samples + 1) * 3);
+  if (!el) return points;
+  const periodMs = Math.pow(el.aAu, 1.5) * YEAR_MS;
+  const v = new THREE.Vector3();
+  for (let i = 0; i <= samples; i++) {
+    helioElementsUnits(el, el.epochMs + (i / samples) * periodMs, v);
+    const j = i * 3;
+    points[j] = v.x;
+    points[j + 1] = v.y;
+    points[j + 2] = v.z;
   }
   return points;
 }
