@@ -11,7 +11,9 @@ import {
   releaseRadius,
   type BodyId,
 } from "../lib/bodies";
-import { approxOrbitPath, planetOrbitPath } from "../lib/ephemeris";
+import { approxOrbitPath, asteroidOrbitPath, planetOrbitPath } from "../lib/ephemeris";
+
+const ASTEROID_IDS: BodyId[] = BODY_IDS.filter((id) => BODIES[id].type === "asteroid");
 import { getSimNow } from "../store/useStore";
 import { frames, offsetOf } from "./frames";
 
@@ -41,6 +43,16 @@ export function OrbitLines() {
     }));
   }, []);
 
+  // named-asteroid ellipses (heliocentric, like the planets)
+  const asteroidLines = useMemo(
+    () =>
+      ASTEROID_IDS.map((id) => ({
+        id,
+        line: makeLine(asteroidOrbitPath(id), BODIES[id].color),
+      })),
+    [],
+  );
+
   // moon circles grouped by parent
   const moonGroups = useMemo(() => {
     const now = getSimNow();
@@ -62,7 +74,7 @@ export function OrbitLines() {
 
   useEffect(
     () => () => {
-      for (const { line } of planetLines) {
+      for (const { line } of [...planetLines, ...asteroidLines]) {
         line.geometry.dispose();
         (line.material as THREE.Material).dispose();
       }
@@ -88,6 +100,9 @@ export function OrbitLines() {
     for (const { line } of planetLines) {
       (line.material as THREE.LineBasicMaterial).opacity = 0.28 * Math.max(away, frames.focus === "sun" ? 1 : 0);
     }
+    for (const { line } of asteroidLines) {
+      (line.material as THREE.LineBasicMaterial).opacity = 0.16 * Math.max(away, frames.focus === "sun" ? 1 : 0);
+    }
 
     // moon circles appear near their parent
     for (const g of moonGroups) {
@@ -104,6 +119,9 @@ export function OrbitLines() {
     <>
       <group ref={sunGroupRef}>
         {planetLines.map(({ id, line }) => (
+          <primitive key={id} object={line} />
+        ))}
+        {asteroidLines.map(({ id, line }) => (
           <primitive key={id} object={line} />
         ))}
       </group>

@@ -229,7 +229,12 @@ const _ringFix = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0,
 
 const RENDERED: BodyId[] = BODY_IDS.filter(
   (id) =>
-    id !== "earth" && id !== "moon" && id !== "sun" && BODIES[id].type !== "craft",
+    id !== "earth" &&
+    id !== "moon" &&
+    id !== "sun" &&
+    BODIES[id].type !== "craft" &&
+    BODIES[id].type !== "asteroid" && // asteroids get their own rock renderer
+    BODIES[id].type !== "blackhole", // black hole has its own renderer
 );
 
 export function Planets() {

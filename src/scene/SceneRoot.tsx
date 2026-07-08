@@ -9,8 +9,11 @@ import { OrbitLines } from "./OrbitLines";
 import { Markers } from "./Markers";
 import { Spacecraft } from "./Spacecraft";
 import { AsteroidBelt } from "./AsteroidBelt";
+import { NamedAsteroids } from "./NamedAsteroids";
 import { SunLight } from "./Lighting";
 import { StarField } from "./Stars";
+import { RandomStars } from "./RandomStars";
+import { BlackHole } from "./BlackHole";
 import { Satellites } from "./Satellites";
 import { SelectedSatellite } from "./SelectedSatellite";
 import { CameraRig } from "./CameraRig";
@@ -35,10 +38,13 @@ export function SceneRoot() {
       <SunLight />
       <Suspense fallback={null}>
         <StarField />
+        <RandomStars />
+        <BlackHole />
         <Sun />
         <Planets />
         <OrbitLines />
         <AsteroidBelt />
+        <NamedAsteroids />
         <EarthFrame>
           <Earth />
           <Moon />
