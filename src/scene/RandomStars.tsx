@@ -29,6 +29,8 @@ function pickTint(r: number, out: THREE.Color) {
 }
 
 const STAR_VERT = /* glsl */ `
+  #include <common>
+  #include <logdepthbuf_pars_vertex>
   attribute float aSize;
   attribute vec3 aColor;
   attribute float aPhase;
@@ -43,14 +45,18 @@ const STAR_VERT = /* glsl */ `
     vTw = 0.78 + 0.22 * sin(uTime * 2.0 + aPhase * 6.2831);
     gl_PointSize = aSize * uPixelRatio * (0.85 + vTw * 0.3);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    #include <logdepthbuf_vertex>
   }
 `;
 
 const STAR_FRAG = /* glsl */ `
+  #include <common>
+  #include <logdepthbuf_pars_fragment>
   varying vec3 vColor;
   varying float vTw;
 
   void main() {
+    #include <logdepthbuf_fragment>
     vec2 c = gl_PointCoord - 0.5;
     float d = length(c);
     if (d > 0.5) discard;
@@ -137,7 +143,7 @@ export function RandomStars() {
           fragmentShader={STAR_FRAG}
           transparent
           depthWrite={false}
-          depthTest={false}
+          depthTest
           blending={THREE.AdditiveBlending}
         />
       </points>
