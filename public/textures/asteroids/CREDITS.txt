@@ -1,0 +1,9 @@
+Asteroid rock surface textures
+Source: Poly Haven (https://polyhaven.com) — License: CC0 (public domain)
+Each ast{NN} set: _diff (albedo), _nor (OpenGL normal), _rough (roughness), 1K JPG.
+
+00 dark_rock              05 rock_face
+01 rock_boulder_cracked   06 worn_rock_natural_01
+02 gray_rocks             07 brown_mud_rocks_01
+03 rock_boulder_dry       08 rocky_terrain
+04 red_laterite_soil_stones  09 rock_ground
