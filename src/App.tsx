@@ -7,6 +7,7 @@ import { CraftPanel } from "./ui/CraftPanel";
 import { TimeControls } from "./ui/TimeControls";
 import { Ticker } from "./ui/Ticker";
 import { FlyToggle } from "./ui/AstronautToggle";
+import { ControlsHelp } from "./ui/ControlsHelp";
 import { LevelTitle } from "./ui/LevelTitle";
 import { ScaleRuler } from "./ui/ScaleRuler";
 import { LoadingOverlay } from "./ui/LoadingOverlay";
@@ -29,6 +30,7 @@ export default function App() {
         <ScaleRuler />
         <Ticker />
         <FlyToggle />
+        <ControlsHelp />
       </div>
       <LoadingOverlay />
     </div>
