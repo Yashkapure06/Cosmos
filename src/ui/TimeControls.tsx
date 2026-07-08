@@ -2,10 +2,18 @@ import { useEffect, useState } from "react";
 import { isLive, simNow, useStore } from "../store/useStore";
 import { fmtUtc } from "../lib/format";
 
-const SPEEDS = [1, 10, 100];
+// low speeds keep satellites watchable (they orbit in ~90 min); the high tiers
+// are expressed as sim-time-per-real-second so you can actually watch the
+// planets revolve around the Sun (Earth: one lap in ~52 s at 1wk/s)
+const SPEEDS = [1, 100, 3600, 86400, 604800];
 
 function speedLabel(s: number): string {
-  return s === 1 ? "1×" : `+${s}×`;
+  if (s === 1) return "1×";
+  if (s < 3600) return `+${s}×`;
+  if (s === 3600) return "1h/s";
+  if (s === 86400) return "1d/s";
+  if (s === 604800) return "1wk/s";
+  return `+${s}×`;
 }
 
 export function TimeControls() {
@@ -44,6 +52,7 @@ export function TimeControls() {
             key={s}
             className={`speed-btn ${time.speed === s ? "speed-on" : ""}`}
             onClick={() => setSpeed(s)}
+            title={s >= 3600 ? `${s.toLocaleString()}× — fast enough to watch the planets orbit` : `${s}× real time`}
           >
             {speedLabel(s)}
           </button>
