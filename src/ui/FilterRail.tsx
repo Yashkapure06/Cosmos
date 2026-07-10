@@ -16,6 +16,8 @@ export function FilterRail() {
   const debrisLoading = useStore((s) => s.debrisLoading);
   const showLabels = useStore((s) => s.showLabels);
   const toggleLabels = useStore((s) => s.toggleLabels);
+  const showConstellations = useStore((s) => s.showConstellations);
+  const toggleConstellations = useStore((s) => s.toggleConstellations);
 
   const counts = useMemo(() => {
     const c = Object.fromEntries(CATEGORY_ORDER.map((k) => [k, 0])) as Record<
@@ -69,6 +71,15 @@ export function FilterRail() {
         <span className="chip-dot" style={{ background: "var(--amber)" }} />
         <span className="chip-label">BODY NAMES</span>
         <span className="chip-count">{showLabels ? "ON" : "OFF"}</span>
+      </button>
+      <button
+        className={`chip chip-labels ${showConstellations ? "chip-on" : ""}`}
+        onClick={toggleConstellations}
+        aria-pressed={showConstellations}
+      >
+        <span className="chip-dot" style={{ background: "#44608a" }} />
+        <span className="chip-label">CONSTELLATIONS</span>
+        <span className="chip-count">{showConstellations ? "ON" : "OFF"}</span>
       </button>
     </nav>
   );

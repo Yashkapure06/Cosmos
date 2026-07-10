@@ -16,11 +16,17 @@ function levelName(dist: number, focus: BodyId): string {
   if (focus === "sun") {
     if (dist < 3000) return "SOLAR CORONA";
     if (dist < 120000) return "INNER SYSTEM";
-    return "THE SOLAR SYSTEM";
+    if (dist < 1_400_000) return "THE SOLAR SYSTEM";
+    if (dist < 6_000_000) return "INTERSTELLAR SPACE";
+    return "THE MILKY WAY";
   }
   const def = BODIES[focus];
   if (def.type === "craft") return `${def.label.toUpperCase()} - DEEP SPACE`;
+  if (def.type === "comet") return def.label.toUpperCase();
   if (def.type === "moon") return `${def.label.toUpperCase()} - ${BODIES[def.parent!].label.toUpperCase()} SYSTEM`;
+  // exoplanets: "TRAPPIST-1E - TRAPPIST-1 SYSTEM"
+  if (def.parent && def.parent !== "sun" && BODIES[def.parent].type === "star")
+    return `${def.label.toUpperCase()} - ${BODIES[def.parent].label.toUpperCase()} SYSTEM`;
   return `${def.label.toUpperCase()} SYSTEM`;
 }
 
