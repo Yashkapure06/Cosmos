@@ -276,6 +276,10 @@ export function ScrollNavigator() {
     const craftOk = spacecraftReady();
     for (const id of BODY_IDS) {
       if (id === focus) continue;
+      // never CAPTURE the current focus's parent -- climbing up is release's
+      // job. (Remote-star systems orbit entirely inside their star's handoff
+      // sphere, so capturing the parent would flap star <-> planet forever.)
+      if (id === BODIES[focus].parent) continue;
       if (BODIES[id].type === "craft" && !craftOk) continue;
       const pos = offsetOf(id, s.pos);
       const d = camera.position.distanceTo(pos);

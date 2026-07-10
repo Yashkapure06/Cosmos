@@ -13,7 +13,9 @@ import {
 } from "../lib/bodies";
 import { approxOrbitPath, asteroidOrbitPath, planetOrbitPath } from "../lib/ephemeris";
 
-const ASTEROID_IDS: BodyId[] = BODY_IDS.filter((id) => BODIES[id].type === "asteroid");
+const ASTEROID_IDS: BodyId[] = BODY_IDS.filter(
+  (id) => BODIES[id].type === "asteroid" || BODIES[id].type === "comet",
+);
 import { getSimNow } from "../store/useStore";
 import { frames, offsetOf } from "./frames";
 
@@ -34,12 +36,17 @@ export function OrbitLines() {
   const sunGroupRef = useRef<THREE.Group>(null);
   const scratch = useMemo(() => new THREE.Vector3(), []);
 
-  // planet ellipses, computed once (orbits are stable at this precision)
+  // planet ellipses, computed once (orbits are stable at this precision);
+  // dwarf planets without an astronomy-engine ephemeris use their elements
   const planetLines = useMemo(() => {
     const now = getSimNow();
-    return PLANET_IDS.map((id) => ({
+    // exoplanets (approxOrbit around a remote star) draw as moon-style circles
+    return PLANET_IDS.filter((id) => !BODIES[id].approxOrbit).map((id) => ({
       id,
-      line: makeLine(planetOrbitPath(id, now), BODIES[id].color),
+      line: makeLine(
+        BODIES[id].helioElements ? asteroidOrbitPath(id) : planetOrbitPath(id, now),
+        BODIES[id].color,
+      ),
     }));
   }, []);
 

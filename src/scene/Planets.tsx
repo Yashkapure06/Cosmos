@@ -12,6 +12,7 @@ import {
   BODY_IDS,
   type BodyDef,
   type BodyId,
+  type RingDef,
 } from "../lib/bodies";
 import { EARTH_RADIUS_KM } from "../lib/constants";
 import { poleVectorScene } from "../lib/ephemeris";
@@ -117,6 +118,54 @@ const RING_FRAG = /* glsl */ `
 
 const HOURS_TO_MS = 3_600_000;
 
+// Which star lights this body: walk the parent chain. Solar-system bodies
+// resolve to the Sun; TRAPPIST-1e resolves to TRAPPIST-1, etc.
+function lightSourceOf(id: BodyId): BodyId {
+  let cur = BODIES[id];
+  while (cur.parent) {
+    const p = BODIES[cur.parent];
+    if (p.type === "star") return p.id;
+    cur = p;
+  }
+  return "sun";
+}
+
+// Procedural ring strip for planets without a photographic ring texture
+// (Jupiter/Uranus/Neptune): paint each band's alpha profile into a 1px-tall
+// RGBA strip, with a touch of radial noise so the bands don't read as vector
+// lines. U runs inner -> outer, exactly like the Saturn strip.
+function makeBandTexture(rings: RingDef): THREE.DataTexture {
+  const W = 1024;
+  const data = new Uint8Array(W * 4);
+  const col = new THREE.Color(rings.color ?? "#aaaaaa");
+  let s = 0x2545f491;
+  const rand = () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  for (let x = 0; x < W; x++) {
+    const u = x / (W - 1);
+    let a = 0;
+    for (const [c, hw, alpha] of rings.bands ?? []) {
+      const d = Math.abs(u - c) / hw;
+      if (d < 1) a += alpha * (1 - d * d); // smooth quadratic falloff
+    }
+    a = Math.min(1, a) * (0.88 + rand() * 0.24); // subtle grain
+    data[x * 4] = Math.round(col.r * 255);
+    data[x * 4 + 1] = Math.round(col.g * 255);
+    data[x * 4 + 2] = Math.round(col.b * 255);
+    data[x * 4 + 3] = Math.round(Math.min(1, a) * 255);
+  }
+  const tex = new THREE.DataTexture(data, W, 1, THREE.RGBAFormat);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.LinearFilter;
+  tex.minFilter = THREE.LinearFilter;
+  tex.needsUpdate = true;
+  return tex;
+}
+
 function BodyMesh({ def }: { def: BodyDef }) {
   const groupRef = useRef<THREE.Group>(null);
   const spinRef = useRef<THREE.Mesh>(null);
@@ -149,17 +198,25 @@ function BodyMesh({ def }: { def: BodyDef }) {
   );
 
   const ring = useMemo(() => {
-    if (!def.ringed) return null;
-    const inner = (74658 / EARTH_RADIUS_KM) * 1; // Saturn C ring, km -> units
-    const outer = 136775 / EARTH_RADIUS_KM;
+    if (!def.rings) return null;
+    const inner = def.rings.innerKm / EARTH_RADIUS_KM;
+    const outer = def.rings.outerKm / EARTH_RADIUS_KM;
     return { inner, outer };
   }, [def]);
 
-  const ringMap = useTexture(def.ringed ? "/textures/8k_saturn_ring_alpha.png" : "/textures/2k_uranus.jpg");
+  const ringPhoto = useTexture(
+    def.rings?.texture ? `/textures/${def.rings.texture}` : "/textures/2k_uranus.jpg",
+  );
   const ringUniforms = useMemo(() => {
-    if (!ring) return null;
-    ringMap.colorSpace = THREE.SRGBColorSpace;
-    ringMap.needsUpdate = true;
+    if (!ring || !def.rings) return null;
+    let ringMap: THREE.Texture;
+    if (def.rings.texture) {
+      ringPhoto.colorSpace = THREE.SRGBColorSpace;
+      ringPhoto.needsUpdate = true;
+      ringMap = ringPhoto;
+    } else {
+      ringMap = makeBandTexture(def.rings);
+    }
     const u = {
       uRingMap: { value: ringMap },
       uInner: { value: ring.inner },
@@ -169,15 +226,20 @@ function BodyMesh({ def }: { def: BodyDef }) {
     };
     ringUniformsRef.current = u;
     return u;
-  }, [ring, ringMap, def]);
+  }, [ring, ringPhoto, def]);
+
+  const lightSource = useMemo(() => lightSourceOf(def.id), [def.id]);
 
   useFrame(() => {
     const g = groupRef.current;
     if (!g) return;
     offsetOf(def.id, g.position);
 
-    // direction to the Sun is frame-independent (pure translation frames)
-    uniforms.uSunDir.value.copy(helio.pos[def.id]).multiplyScalar(-1).normalize();
+    // direction to this body's own star (frame-independent, pure translation)
+    uniforms.uSunDir.value
+      .copy(helio.pos[lightSource])
+      .sub(helio.pos[def.id])
+      .normalize();
 
     if (spinRef.current && def.rotationHours) {
       spinRef.current.rotation.y =
@@ -197,7 +259,7 @@ function BodyMesh({ def }: { def: BodyDef }) {
   return (
     <group ref={groupRef}>
       <group quaternion={tiltQuat}>
-        <mesh ref={spinRef}>
+        <mesh ref={spinRef} scale={def.ellipsoid ?? 1}>
           <sphereGeometry args={[def.radius, 64, 64]} />
           <shaderMaterial
             uniforms={uniforms}
@@ -231,10 +293,12 @@ const RENDERED: BodyId[] = BODY_IDS.filter(
   (id) =>
     id !== "earth" &&
     id !== "moon" &&
-    id !== "sun" &&
+    BODIES[id].type !== "star" && // the Sun + remote stars have their own renderers
     BODIES[id].type !== "craft" &&
     BODIES[id].type !== "asteroid" && // asteroids get their own rock renderer
-    BODIES[id].type !== "blackhole", // black hole has its own renderer
+    BODIES[id].type !== "comet" && // comets get nucleus + coma + tail (Comets.tsx)
+    BODIES[id].type !== "blackhole" && // black hole has its own renderer
+    BODIES[id].rockIndex === undefined, // rocky moons render as irregular rocks
 );
 
 export function Planets() {

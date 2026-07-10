@@ -114,9 +114,15 @@ export function CameraRig() {
     } else {
       controls.enabled = true;
 
-      // faster wheel travel at interplanetary distances
+      // faster wheel travel at interplanetary -> interstellar distances
       controls.zoomSpeed =
-        frames.cameraDist > 20000 ? 3.2 : frames.cameraDist > 500 ? 1.7 : 0.8;
+        frames.cameraDist > 200000
+          ? 4.5
+          : frames.cameraDist > 20000
+            ? 3.2
+            : frames.cameraDist > 500
+              ? 1.7
+              : 0.8;
 
       let nearest: BodyId = "sun";
       let bestD = Infinity;
@@ -154,7 +160,10 @@ export function CameraRig() {
       dampingFactor={0.08}
       rotateSpeed={0.55}
       panSpeed={0.9}
-      maxDistance={1_500_000}
+      // effectively unlimited: far enough to leave the Oort cloud behind and
+      // see the whole galaxy as an object (OrbitControls dolly is
+      // multiplicative, so crossing this range only takes a few flicks)
+      maxDistance={25_000_000}
       zoomSpeed={0.8}
       enablePan
       screenSpacePanning

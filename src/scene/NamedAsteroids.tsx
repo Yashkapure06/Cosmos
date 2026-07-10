@@ -15,9 +15,24 @@ import { offsetOf } from "./frames";
 
 const HOURS_TO_MS = 3_600_000;
 
+// named belt rocks + the small irregular moons (Phobos, Deimos, Amalthea,
+// Hyperion, Phoebe, Nix, Hydra): anything with a rock texture assigned that
+// isn't part of the ambient belt field
 const ASTEROID_IDS: BodyId[] = BODY_IDS.filter(
-  (id) => BODIES[id].type === "asteroid",
+  (id) =>
+    BODIES[id].type === "asteroid" ||
+    (BODIES[id].type === "moon" && BODIES[id].rockIndex !== undefined),
 );
+
+// stable per-body shape seed (rockIndex repeats across bodies; ids don't)
+function idSeed(id: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
 
 // irregular rock body: unit-radius icosphere pushed around by layered noise.
 // `lumpiness` controls how far from round it gets (Ceres ~round, Vesta lumpy).
@@ -65,11 +80,13 @@ function AsteroidMesh({ def }: { def: BodyDef }) {
   const groupRef = useRef<THREE.Group>(null);
   const spinRef = useRef<THREE.Mesh>(null);
 
-  // Vesta/Pallas/Davida read as lumpier; Ceres/Hygiea rounder
-  const lumpiness = def.id === "ceres" || def.id === "hygiea" ? 0.16 : 0.28;
+  // Vesta/Pallas/Davida read as lumpier; Ceres/Hygiea rounder; the small
+  // moons (Phobos, Hyperion, ...) are the true potatoes
+  const lumpiness =
+    def.id === "ceres" || def.id === "hygiea" ? 0.16 : def.type === "moon" ? 0.34 : 0.28;
   const geometry = useMemo(
-    () => buildBodyRock((def.rockIndex ?? 0) * 2654435761 + 101, lumpiness),
-    [def.rockIndex, def.id, lumpiness],
+    () => buildBodyRock(idSeed(def.id), lumpiness),
+    [def.id, lumpiness],
   );
 
   const [diff, nor, rough] = useTexture(rockPaths(def.rockIndex ?? 0));
@@ -97,7 +114,7 @@ function AsteroidMesh({ def }: { def: BodyDef }) {
 
   // stable pseudo-random axial tilt so they don't all spin bolt-upright
   const tiltQuat = useMemo(() => {
-    let s = ((def.rockIndex ?? 0) + 7) * 2246822519;
+    let s = (idSeed(def.id) + 7) * 2246822519;
     const r = () => {
       s = (s + 0x6d2b79f5) | 0;
       let t = Math.imul(s ^ (s >>> 15), 1 | s);
@@ -106,7 +123,7 @@ function AsteroidMesh({ def }: { def: BodyDef }) {
     };
     const axis = new THREE.Vector3(r() * 2 - 1, r() * 2 - 1, r() * 2 - 1).normalize();
     return new THREE.Quaternion().setFromAxisAngle(axis, r() * 0.9 - 0.45);
-  }, [def.rockIndex]);
+  }, [def.id]);
 
   useFrame(() => {
     const g = groupRef.current;
@@ -118,10 +135,14 @@ function AsteroidMesh({ def }: { def: BodyDef }) {
     }
   });
 
+  // the smallest moons (Deimos ~6 km) would be sub-pixel at true scale even
+  // fully zoomed in; floor their visual radius so the rock is explorable
+  const visualRadius = def.type === "moon" ? Math.max(def.radius, 0.01) : def.radius;
+
   return (
     <group ref={groupRef}>
       <group quaternion={tiltQuat}>
-        <mesh ref={spinRef} geometry={geometry} material={material} scale={def.radius} />
+        <mesh ref={spinRef} geometry={geometry} material={material} scale={visualRadius} />
       </group>
     </group>
   );

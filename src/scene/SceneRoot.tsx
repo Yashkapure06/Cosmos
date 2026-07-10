@@ -10,9 +10,17 @@ import { Markers } from "./Markers";
 import { Spacecraft } from "./Spacecraft";
 import { AsteroidBelt } from "./AsteroidBelt";
 import { NamedAsteroids } from "./NamedAsteroids";
+import { Comets } from "./Comets";
+import { Galaxy } from "./Galaxy";
+import { KuiperBelt, OortCloud } from "./OuterBelts";
 import { SunLight } from "./Lighting";
 import { StarField } from "./Stars";
-import { RandomStars } from "./RandomStars";
+import { RealStars } from "./RealStars";
+import { Constellations } from "./Constellations";
+import { DeepSky } from "./DeepSky";
+import { MeteorShowers } from "./MeteorShowers";
+import { EclipseShadows } from "./EclipseShadows";
+import { RemoteStars } from "./RemoteStars";
 import { BlackHole } from "./BlackHole";
 import { Satellites } from "./Satellites";
 import { SelectedSatellite } from "./SelectedSatellite";
@@ -25,7 +33,7 @@ export function SceneRoot() {
     <Canvas
       className="scene-canvas"
       dpr={[1, 2]}
-      camera={{ fov: 42, near: 0.05, far: 5_000_000, position: [0.2, 0.6, 8.5] }}
+      camera={{ fov: 42, near: 0.05, far: 40_000_000, position: [0.2, 0.6, 8.5] }}
       gl={{
         antialias: true,
         logarithmicDepthBuffer: true,
@@ -38,13 +46,22 @@ export function SceneRoot() {
       <SunLight />
       <Suspense fallback={null}>
         <StarField />
-        <RandomStars />
+        <RealStars />
+        <Constellations />
+        <DeepSky />
+        <MeteorShowers />
+        <Galaxy />
         <BlackHole />
         <Sun />
+        <RemoteStars />
         <Planets />
         <OrbitLines />
         <AsteroidBelt />
         <NamedAsteroids />
+        <Comets />
+        <KuiperBelt />
+        <OortCloud />
+        <EclipseShadows />
         <EarthFrame>
           <Earth />
           <Moon />

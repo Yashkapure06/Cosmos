@@ -1,32 +1,16 @@
-// Procedural point stars scattered at random directions across the sky. The
-// milky-way image (StarField) stays underneath as faint haze; this adds the
-// actual pin-point stars it lacks -- varied brightness, real colour
-// temperature (hot blue-white through cool amber), a bright core with soft
-// glow and a faint diffraction cross, plus a gentle twinkle. The whole shell
-// follows the camera so it reads as an infinitely distant sky at any zoom.
+// The real night sky: 5000+ actual stars from the Hipparcos/Yale catalogues
+// (via d3-celestial's stars.6.json) at their true RA/Dec, sized by true
+// magnitude and tinted by true B-V colour. Sirius, Betelgeuse, the Southern
+// Cross -- they're all exactly where they belong, which is what makes the
+// constellation figures (Constellations.tsx) line up. Replaces the old
+// procedurally-random starfield. Same camera-following shell + twinkle.
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
+import { bvToColor, loadStars, raDecToDir, type CatalogStar } from "../lib/sky";
 
-const COUNT = 4200;
-const SHELL = 8000; // just inside the 9000-unit milky-way sphere
-
-// blackbody-ish star tints, weighted toward the common cool white / blue-white
-const STAR_TINTS: [number, THREE.Color][] = [
-  [0.30, new THREE.Color("#aacbff")], // hot blue-white (rare, but striking)
-  [0.62, new THREE.Color("#e8efff")], // white
-  [0.85, new THREE.Color("#fff4e0")], // yellow-white (sun-like)
-  [0.96, new THREE.Color("#ffd8a6")], // amber
-  [1.00, new THREE.Color("#ffb27a")], // cool orange-red
-];
-
-function pickTint(r: number, out: THREE.Color) {
-  for (const [thresh, c] of STAR_TINTS) {
-    if (r <= thresh) return out.copy(c);
-  }
-  return out.copy(STAR_TINTS[STAR_TINTS.length - 1][1]);
-}
+export const STAR_SHELL = 8000; // just inside the 9000-unit milky-way sphere
 
 const STAR_VERT = /* glsl */ `
   #include <common>
@@ -70,46 +54,44 @@ const STAR_FRAG = /* glsl */ `
   }
 `;
 
-export function RandomStars() {
+export function RealStars() {
   const groupRef = useRef<THREE.Group>(null);
-  const matRef = useRef<THREE.ShaderMaterial>(null);
+  const [stars, setStars] = useState<CatalogStar[] | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    loadStars().then((s) => alive && setStars(s));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const geometry = useMemo(() => {
-    const positions = new Float32Array(COUNT * 3);
-    const colors = new Float32Array(COUNT * 3);
-    const sizes = new Float32Array(COUNT);
-    const phases = new Float32Array(COUNT);
+    if (!stars) return null;
+    const n = stars.length;
+    const positions = new Float32Array(n * 3);
+    const colors = new Float32Array(n * 3);
+    const sizes = new Float32Array(n);
+    const phases = new Float32Array(n);
     const dir = new THREE.Vector3();
     const tint = new THREE.Color();
 
-    // stable RNG so the sky is identical every load
-    let s = 0x9e3779b9;
-    const rand = () => {
-      s = (s + 0x6d2b79f5) | 0;
-      let t = Math.imul(s ^ (s >>> 15), 1 | s);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
+    for (let i = 0; i < n; i++) {
+      const s = stars[i];
+      raDecToDir(s.raDeg, s.decDeg, dir);
+      positions[i * 3] = dir.x * STAR_SHELL;
+      positions[i * 3 + 1] = dir.y * STAR_SHELL;
+      positions[i * 3 + 2] = dir.z * STAR_SHELL;
 
-    for (let i = 0; i < COUNT; i++) {
-      // uniform random direction on the sphere
-      const u = rand() * 2 - 1;
-      const theta = rand() * Math.PI * 2;
-      const rxy = Math.sqrt(1 - u * u);
-      dir.set(rxy * Math.cos(theta), u, rxy * Math.sin(theta));
-      positions[i * 3] = dir.x * SHELL;
-      positions[i * 3 + 1] = dir.y * SHELL;
-      positions[i * 3 + 2] = dir.z * SHELL;
-
-      pickTint(rand(), tint);
+      bvToColor(s.bv, tint);
       colors[i * 3] = tint.r;
       colors[i * 3 + 1] = tint.g;
       colors[i * 3 + 2] = tint.b;
 
-      // magnitude: power-law so most stars are faint specks, a few blaze
-      const m = rand();
-      sizes[i] = 1.3 + Math.pow(m, 6) * 9.0;
-      phases[i] = rand();
+      // true magnitude -> pixel size: Sirius (-1.46) blazes, mag-6 is a speck
+      const bright = Math.pow(10, -0.24 * s.mag); // relative flux-ish scale
+      sizes[i] = THREE.MathUtils.clamp(1.1 + bright * 4.2, 1.1, 11.0);
+      phases[i] = ((s.raDeg * 13.7 + s.decDeg * 7.3) % 1 + 1) % 1;
     }
 
     const g = new THREE.BufferGeometry();
@@ -118,7 +100,7 @@ export function RandomStars() {
     g.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
     g.setAttribute("aPhase", new THREE.BufferAttribute(phases, 1));
     return g;
-  }, []);
+  }, [stars]);
 
   const uniforms = useMemo(
     () => ({
@@ -128,10 +110,14 @@ export function RandomStars() {
     [],
   );
 
+  const matRef = useRef<THREE.ShaderMaterial>(null);
+
   useFrame(({ camera, clock }) => {
     groupRef.current?.position.copy(camera.position);
-    if (matRef.current) uniforms.uTime.value = clock.elapsedTime;
+    if (matRef.current) matRef.current.uniforms.uTime.value = clock.elapsedTime;
   });
+
+  if (!geometry) return null;
 
   return (
     <group ref={groupRef}>

@@ -43,8 +43,12 @@ function Marker({ id }: { id: BodyId }) {
     // hide the focused craft's own label up close - the model + panel own it
     if (def.type === "craft" && useStore.getState().focus === id && dist < 10)
       visible = false;
-    if (visible && def.type === "moon" && def.parent) {
-      // declutter: moon labels only near their parent system
+    const declutter =
+      (def.type === "moon" && def.parent) ||
+      // exoplanets + companion stars: labels only near their own star
+      (def.parent && def.parent !== "sun" && BODIES[def.parent].type === "star");
+    if (visible && declutter && def.parent) {
+      // declutter: labels only near their parent system
       const pDist = camera.position.distanceTo(offsetOf(def.parent, scratch.parent));
       visible = pDist < releaseRadius(def.parent) * 3;
     }
