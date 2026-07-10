@@ -41,6 +41,9 @@ interface OrbitStore {
   // body name labels (markers) visibility
   showLabels: boolean;
 
+  // constellation figures + zodiac + ecliptic visibility
+  showConstellations: boolean;
+
   // time machine
   time: TimeState;
 
@@ -56,6 +59,7 @@ interface OrbitStore {
   setSpacecraftReady: () => void;
   toggleFlyMode: () => void;
   toggleLabels: () => void;
+  toggleConstellations: () => void;
   setSpeed: (speed: number) => void;
   jumpBy: (deltaMs: number) => void;
   goLive: () => void;
@@ -88,6 +92,8 @@ export const useStore = create<OrbitStore>((set, get) => ({
 
   showLabels: true,
 
+  showConstellations: true,
+
   time: { anchorReal: Date.now(), anchorSim: Date.now(), speed: 1 },
 
   setStage: (stage, error) => set({ stage, error: error ?? null }),
@@ -116,6 +122,8 @@ export const useStore = create<OrbitStore>((set, get) => ({
   setSpacecraftReady: () => set({ spacecraftReady: true }),
   toggleFlyMode: () => set((s) => ({ flyMode: !s.flyMode })),
   toggleLabels: () => set((s) => ({ showLabels: !s.showLabels })),
+  toggleConstellations: () =>
+    set((s) => ({ showConstellations: !s.showConstellations })),
 
   setSpeed: (speed) => {
     const t = get().time;
