@@ -4,6 +4,8 @@ import { SearchBar } from "./ui/SearchBar";
 import { FilterRail } from "./ui/FilterRail";
 import { InfoPanel } from "./ui/InfoPanel";
 import { CraftPanel } from "./ui/CraftPanel";
+import { BodyPanel } from "./ui/BodyPanel";
+import { TourButton } from "./ui/TourButton";
 import { TimeControls } from "./ui/TimeControls";
 import { Ticker } from "./ui/Ticker";
 import { FlyToggle } from "./ui/AstronautToggle";
@@ -26,7 +28,9 @@ export default function App() {
         <FilterRail />
         <InfoPanel />
         <CraftPanel />
+        <BodyPanel />
         <TimeControls />
+        <TourButton />
         <ScaleRuler />
         <Ticker />
         <FlyToggle />

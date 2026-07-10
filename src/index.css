@@ -1,6 +1,6 @@
-/* COSMOS - mission-control editorial.
-   Palette: void #050810 · panel #0b1120 · line #1c2740
-   amber #ffb000 (signature) · ice #7dd3fc · text #e8edf6 · dim #8a97ad */
+﻿/* COSMOS - mission-control editorial.
+   Palette: void #050810 Â· panel #0b1120 Â· line #1c2740
+   amber #ffb000 (signature) Â· ice #7dd3fc Â· text #e8edf6 Â· dim #8a97ad */
 
 :root {
   --void: #050810;
@@ -879,4 +879,88 @@ body,
     animation: none;
     width: 100%;
   }
+}
+
+/* ---------- sky annotations (constellations / DSOs / showers) ---------- */
+
+.constellation-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: rgba(255, 176, 0, 0.72);
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.dso-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: rgba(168, 186, 214, 0.62);
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.shower-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  color: #ffe6b8;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.95);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.shower-label em {
+  font-style: normal;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+}
+
+/* ---------- grand tour ---------- */
+
+.tour-btn {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 196px; /* stacked above the FLY MODE pill (bottom: 150px) */
+  padding: 9px 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.tour-btn:hover {
+  border-color: var(--amber);
+}
+
+.tour-on {
+  color: var(--amber);
+  border-color: var(--amber);
+  background: rgba(255, 176, 0, 0.1);
+}
+
+/* ---------- body fact card ---------- */
+
+.body-blurb {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--dim);
 }
