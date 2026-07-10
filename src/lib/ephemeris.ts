@@ -68,6 +68,7 @@ const AE_BODY: Partial<Record<BodyId, Body>> = {
   saturn: Body.Saturn,
   uranus: Body.Uranus,
   neptune: Body.Neptune,
+  pluto: Body.Pluto,
 };
 
 function eqjToScene(x: number, y: number, z: number, target: THREE.Vector3): THREE.Vector3 {
@@ -216,6 +217,7 @@ const ORBITAL_PERIOD_DAYS: Partial<Record<BodyId, number>> = {
   saturn: 10759,
   uranus: 30687,
   neptune: 60190,
+  pluto: 90560,
 };
 
 /** Heliocentric orbit path of a planet, scene units (one full revolution). */
