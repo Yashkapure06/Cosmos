@@ -964,3 +964,108 @@ body,
   line-height: 1.55;
   color: var(--dim);
 }
+
+/* ---------- events menu ---------- */
+
+.events-menu {
+  position: absolute;
+  left: 26px;
+  bottom: 92px;
+  font-family: var(--mono);
+}
+
+.events-btn {
+  padding: 8px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  transition: border-color 0.2s;
+}
+
+.events-btn:hover,
+.events-open {
+  border-color: var(--amber);
+}
+
+.events-pop {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  background: var(--panel);
+  border: 1px solid var(--amber);
+  border-radius: 4px;
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+.events-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.events-item:last-child {
+  border-bottom: none;
+}
+
+.events-item:hover {
+  background: rgba(255, 176, 0, 0.08);
+}
+
+.events-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--text);
+}
+
+.events-detail {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+}
+
+/* ---------- JWST milestones ---------- */
+
+.jwst-list {
+  list-style: none;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.jwst-list li {
+  display: flex;
+  gap: 10px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--dim);
+}
+
+.jwst-year {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--amber);
+  padding-top: 1px;
+}

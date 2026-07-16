@@ -6,6 +6,7 @@ import { InfoPanel } from "./ui/InfoPanel";
 import { CraftPanel } from "./ui/CraftPanel";
 import { BodyPanel } from "./ui/BodyPanel";
 import { TourButton } from "./ui/TourButton";
+import { EventsMenu } from "./ui/EventsMenu";
 import { TimeControls } from "./ui/TimeControls";
 import { Ticker } from "./ui/Ticker";
 import { FlyToggle } from "./ui/AstronautToggle";
@@ -31,6 +32,7 @@ export default function App() {
         <BodyPanel />
         <TimeControls />
         <TourButton />
+        <EventsMenu />
         <ScaleRuler />
         <Ticker />
         <FlyToggle />
