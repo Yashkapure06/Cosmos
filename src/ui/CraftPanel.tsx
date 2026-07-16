@@ -77,6 +77,27 @@ export function CraftPanel() {
           </div>
         )}
       </dl>
+      {focus === "jwst" && (
+        <ul className="jwst-list">
+          {JWST_MILESTONES.map((m) => (
+            <li key={m.year + m.text}>
+              <span className="jwst-year">{m.year}</span>
+              {m.text}
+            </li>
+          ))}
+        </ul>
+      )}
     </aside>
   );
 }
+
+// highlights from Webb's first years -- the discoveries this dot in the sky
+// actually made
+const JWST_MILESTONES = [
+  { year: "2022", text: "First deep field: thousands of galaxies in a grain-of-sand patch of sky" },
+  { year: "2022", text: "Water vapour read in exoplanet WASP-96b's atmosphere" },
+  { year: "2023", text: "Cassiopeia A supernova remnant imaged inside-out" },
+  { year: "2024", text: "The Crab Nebula's pulsar heart in infrared detail" },
+  { year: "2025", text: "TRAPPIST-1e atmosphere search — the habitable-zone test" },
+  { year: "2026", text: "Most distant galaxy yet: light from <300 Myr after the Big Bang" },
+];

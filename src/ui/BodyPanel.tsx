@@ -14,6 +14,7 @@ const TYPE_LABEL: Record<string, string> = {
   moon: "NATURAL SATELLITE",
   asteroid: "ASTEROID / DWARF",
   comet: "COMET",
+  nebula: "STELLAR NURSERY",
   blackhole: "SUPERMASSIVE BLACK HOLE",
 };
 

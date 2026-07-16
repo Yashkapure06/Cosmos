@@ -23,6 +23,7 @@ function levelName(dist: number, focus: BodyId): string {
   const def = BODIES[focus];
   if (def.type === "craft") return `${def.label.toUpperCase()} - DEEP SPACE`;
   if (def.type === "comet") return def.label.toUpperCase();
+  if (def.type === "nebula") return `${def.label.toUpperCase()} - STELLAR NURSERY`;
   if (def.type === "moon") return `${def.label.toUpperCase()} - ${BODIES[def.parent!].label.toUpperCase()} SYSTEM`;
   // exoplanets: "TRAPPIST-1E - TRAPPIST-1 SYSTEM"
   if (def.parent && def.parent !== "sun" && BODIES[def.parent].type === "star")
