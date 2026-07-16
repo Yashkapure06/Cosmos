@@ -91,6 +91,16 @@ function Dso({ o }: { o: DeepSkyObject }) {
     [o],
   );
   const showLabels = useStore((s) => s.showConstellations);
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const scratch = useMemo(() => new THREE.Vector3(), []);
+
+  // hide the label when this direction is behind the camera (drei Html
+  // mirror-projects otherwise)
+  useFrame(({ camera }) => {
+    if (!labelRef.current) return;
+    const inFront = camera.getWorldDirection(scratch).dot(pos) > 0;
+    labelRef.current.style.opacity = inFront && showLabels ? "1" : "0";
+  });
 
   return (
     <group position={pos}>
@@ -103,11 +113,11 @@ function Dso({ o }: { o: DeepSkyObject }) {
           blending={THREE.AdditiveBlending}
         />
       </sprite>
-      {showLabels && (
-        <Html center zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-          <span className="dso-label">{o.label.toUpperCase()}</span>
-        </Html>
-      )}
+      <Html center zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
+        <span ref={labelRef} className="dso-label" style={{ opacity: 0 }}>
+          {o.label.toUpperCase()}
+        </span>
+      </Html>
     </group>
   );
 }

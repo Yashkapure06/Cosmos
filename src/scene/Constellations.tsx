@@ -119,8 +119,17 @@ export function Constellations() {
     [geoms],
   );
 
+  const labelRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const scratch = useMemo(() => new THREE.Vector3(), []);
+
   useFrame(({ camera }) => {
     groupRef.current?.position.copy(camera.position);
+    // hide labels whose direction is behind the camera (Html mirror-projects)
+    camera.getWorldDirection(scratch);
+    for (let i = 0; i < labelDirs.length; i++) {
+      const el = labelRefs.current[i];
+      if (el) el.style.opacity = scratch.dot(labelDirs[i]) > 0 ? "1" : "0";
+    }
   });
 
   if (!geoms) return null;
@@ -150,7 +159,15 @@ export function Constellations() {
         zodiacNames.map((n, i) => (
           <group key={n.id} position={labelDirs[i]}>
             <Html center zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-              <span className="constellation-label">{n.name.toUpperCase()}</span>
+              <span
+                ref={(el) => {
+                  labelRefs.current[i] = el;
+                }}
+                className="constellation-label"
+                style={{ opacity: 0 }}
+              >
+                {n.name.toUpperCase()}
+              </span>
             </Html>
           </group>
         ))}

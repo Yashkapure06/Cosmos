@@ -19,6 +19,8 @@ import { RealStars } from "./RealStars";
 import { Constellations } from "./Constellations";
 import { DeepSky } from "./DeepSky";
 import { MeteorShowers } from "./MeteorShowers";
+import { Supernovae } from "./Supernovae";
+import { OrionNursery } from "./OrionNursery";
 import { EclipseShadows } from "./EclipseShadows";
 import { RemoteStars } from "./RemoteStars";
 import { BlackHole } from "./BlackHole";
@@ -50,7 +52,9 @@ export function SceneRoot() {
         <Constellations />
         <DeepSky />
         <MeteorShowers />
+        <Supernovae />
         <Galaxy />
+        <OrionNursery />
         <BlackHole />
         <Sun />
         <RemoteStars />

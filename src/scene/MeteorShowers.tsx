@@ -54,11 +54,18 @@ function Radiant({ s, texture }: { s: MeteorShower; texture: THREE.CanvasTexture
     [s],
   );
   const matRef = useRef<THREE.SpriteMaterial>(null);
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const scratch = useMemo(() => new THREE.Vector3(), []);
 
-  // gentle pulse so an active radiant draws the eye
-  useFrame(({ clock }) => {
+  useFrame(({ clock, camera }) => {
+    // gentle pulse so an active radiant draws the eye
     if (matRef.current)
       matRef.current.opacity = 0.55 + 0.25 * Math.sin(clock.elapsedTime * 1.6);
+    // hide the label when behind the camera (drei Html mirror-projects)
+    if (labelRef.current) {
+      const inFront = camera.getWorldDirection(scratch).dot(pos) > 0;
+      labelRef.current.style.opacity = inFront ? "1" : "0";
+    }
   });
 
   return (
@@ -74,7 +81,7 @@ function Radiant({ s, texture }: { s: MeteorShower; texture: THREE.CanvasTexture
         />
       </sprite>
       <Html center zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-        <span className="shower-label">
+        <span ref={labelRef} className="shower-label" style={{ opacity: 0 }}>
           {s.label.toUpperCase()} ACTIVE
           <em>peak {s.peak}</em>
         </span>

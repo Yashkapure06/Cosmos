@@ -297,6 +297,7 @@ const RENDERED: BodyId[] = BODY_IDS.filter(
     BODIES[id].type !== "craft" &&
     BODIES[id].type !== "asteroid" && // asteroids get their own rock renderer
     BODIES[id].type !== "comet" && // comets get nucleus + coma + tail (Comets.tsx)
+    BODIES[id].type !== "nebula" && // the nursery renders itself (OrionNursery.tsx)
     BODIES[id].type !== "blackhole" && // black hole has its own renderer
     BODIES[id].rockIndex === undefined, // rocky moons render as irregular rocks
 );

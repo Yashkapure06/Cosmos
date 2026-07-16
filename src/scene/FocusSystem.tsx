@@ -216,6 +216,31 @@ export function ScrollNavigator() {
     };
     nav.flyTo = flyTo;
 
+    // glide the orbit target so the view faces a sky direction (RA/Dec)
+    nav.aimSky = (raDeg: number, decDeg: number) => {
+      const c = controlsRef.current;
+      if (!c) return;
+      flight.current = null;
+      gsap.killTweensOf([camera.position, c.target]);
+      const ra = (raDeg * Math.PI) / 180;
+      const dec = (decDeg * Math.PI) / 180;
+      const dir = new THREE.Vector3(
+        Math.cos(dec) * Math.cos(ra),
+        Math.sin(dec),
+        -Math.cos(dec) * Math.sin(ra),
+      );
+      const dist = Math.max(camera.position.distanceTo(c.target), 1);
+      const dest = camera.position.clone().addScaledVector(dir, dist);
+      gsap.to(c.target, {
+        x: dest.x,
+        y: dest.y,
+        z: dest.z,
+        duration: 1.4,
+        ease: "power2.inOut",
+        onUpdate: () => c.update(),
+      });
+    };
+
     // user input takes control back immediately
     const cancelFlight = () => {
       flight.current = null;
@@ -239,6 +264,7 @@ export function ScrollNavigator() {
       el.removeEventListener("pointerdown", cancelFlight);
       el.style.cursor = "";
       nav.flyTo = () => {};
+      nav.aimSky = () => {};
       flight.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
