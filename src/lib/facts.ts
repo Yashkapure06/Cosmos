@@ -47,6 +47,7 @@ const BLURBS: Partial<Record<BodyId, string>> = {
   ceres: "The largest asteroid and the first discovered (1801). Dawn found bright salt deposits in Occator crater.",
   vesta: "The brightest asteroid, sometimes visible to the naked eye. Source of many meteorites on Earth.",
   blackhole: "4.15 million solar masses at the true galactic centre, 26,000 light-years away. Imaged by the EHT in 2022.",
+  orionnebula: "The nearest massive star-forming region, 1,344 light-years away — a cloud 24 light-years across where ~700 new stars are condensing right now. Watch the knots: stars ignite before your eyes.",
   trappist1: "An ultra-cool red dwarf barely bigger than Jupiter, hosting SEVEN Earth-sized worlds — three in the habitable zone. 40 light-years away.",
   trappist1e: "The most promising: dense, rocky, likely temperate. A prime JWST target for biosignatures.",
   proxima: "The nearest star to the Sun — 4.24 light-years. A flare star: its planets endure violent radiation storms.",
@@ -65,7 +66,11 @@ export interface BodyFacts {
 
 export function factsFor(id: BodyId): BodyFacts {
   const def = BODIES[id];
-  const radiusKm = def.type === "craft" ? null : Math.round(def.radius * EARTH_RADIUS_KM);
+  // craft are model-scale; the nebula's "radius" is a scene extent, not a body
+  const radiusKm =
+    def.type === "craft" || def.type === "nebula"
+      ? null
+      : Math.round(def.radius * EARTH_RADIUS_KM);
   const orbitDays =
     def.approxOrbit?.periodDays != null
       ? Math.abs(def.approxOrbit.periodDays)

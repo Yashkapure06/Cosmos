@@ -56,6 +56,7 @@ export type BodyId =
   | "proximad"
   | "alphacenA"
   | "alphacenB"
+  | "orionnebula"
   | "voyager1"
   | "voyager2"
   | "newhorizons"
@@ -69,7 +70,15 @@ export type BodyId =
   | "davida"
   | "blackhole";
 
-export type BodyType = "star" | "planet" | "moon" | "craft" | "asteroid" | "comet" | "blackhole";
+export type BodyType =
+  | "star"
+  | "planet"
+  | "moon"
+  | "craft"
+  | "asteroid"
+  | "comet"
+  | "nebula"
+  | "blackhole";
 
 /** ring system: a photographic strip texture (Saturn) or procedural bands */
 export interface RingDef {
@@ -837,6 +846,19 @@ export const BODIES: Record<BodyId, BodyDef> = {
     approxOrbit: { aKm: 3_520_000_000, periodDays: 29200, phase: 2.0 },
   },
 
+  // The Orion Nebula as a visitable stellar nursery (OrionNursery.tsx): fly
+  // into the gas and watch protostars ignite. True sky direction, distance
+  // compressed like the black hole (really 1,344 ly).
+  orionnebula: {
+    id: "orionnebula",
+    label: "Orion Nebula",
+    type: "nebula",
+    parent: "sun",
+    radius: 45000, // cloud half-extent, scene units
+    color: "#e88ab0",
+    fixedHelioUnits: fixedAt(83.82, -5.39, 4_500_000),
+  },
+
   // A visitable black hole, pinned in the direction of Sagittarius A*. Fly to
   // it and orbit it like any body; the render (BlackHole.tsx) gives the disk.
   blackhole: {
@@ -863,6 +885,7 @@ export function handoffIn(id: BodyId): number {
   if (b.type === "craft") return 1.2;
   if (b.type === "asteroid") return Math.max(2.5, b.radius * 25);
   if (b.type === "comet") return 2.5;
+  if (b.type === "nebula") return b.radius * 2.5;
   if (b.type === "blackhole") return b.radius * 30;
   // tiny rock moons: a 1.5-unit floor would swallow their whole orbit
   // (Phobos circles Mars at ~1.47 units) and cause focus flapping
@@ -879,6 +902,7 @@ export function releaseRadius(id: BodyId): number {
   if (b.type === "craft") return 15;
   if (b.type === "asteroid") return Math.max(30, b.radius * 120);
   if (b.type === "comet") return 30;
+  if (b.type === "nebula") return b.radius * 6;
   if (b.type === "blackhole") return b.radius * 200;
   if (b.type === "moon" && b.rockIndex !== undefined) return Math.max(1.2, b.radius * 80);
   return Math.max(20, b.radius * 60);
@@ -888,6 +912,8 @@ export function minCameraDistance(id: BodyId): number {
   if (BODIES[id].type === "craft") return 0.02;
   // nucleus meshes render enlarged (COMET_MESH_GAIN), keep the camera outside
   if (BODIES[id].type === "comet") return 0.06;
+  // nebula: the whole point is flying INSIDE the cloud
+  if (BODIES[id].type === "nebula") return 5;
   // never let the camera cross the event horizon
   if (BODIES[id].type === "blackhole") return BODIES[id].radius * 1.15;
   return Math.max(0.02, BODIES[id].radius * 1.25);
@@ -902,6 +928,8 @@ export function viewDistance(id: BodyId): number {
   if (b.type === "comet") return 0.5;
   // frame the whole accretion disk, which extends to ~4.3x the horizon radius
   if (b.type === "blackhole") return b.radius * 9;
+  // frame the whole cloud on arrival; wheel in from there to enter it
+  if (b.type === "nebula") return b.radius * 2.4;
   // tiny rock moons (Phobos, Nix, ...): pull right in so the stone fills the view
   if (b.type === "moon" && b.rockIndex !== undefined) return Math.max(0.035, b.radius * 4.5);
   return Math.max(0.5, b.radius * 3.4);

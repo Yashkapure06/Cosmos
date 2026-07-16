@@ -124,7 +124,7 @@ export interface DeepSkyObject {
 
 export const DEEP_SKY: DeepSkyObject[] = [
   { id: "m31", label: "Andromeda Galaxy", raDeg: 10.68, decDeg: 41.27, size: 640, kind: "galaxy", tint: "#d8d2e8", stretch: 2.6, angle: 0.66 },
-  { id: "m42", label: "Orion Nebula", raDeg: 83.82, decDeg: -5.39, size: 300, kind: "nebula", tint: "#e88ab0" },
+  // (the Orion Nebula is a visitable 3D body now -- see OrionNursery.tsx)
   { id: "m45", label: "Pleiades", raDeg: 56.87, decDeg: 24.11, size: 300, kind: "cluster", tint: "#9fc4ff" },
   { id: "lmc", label: "Large Magellanic Cloud", raDeg: 80.89, decDeg: -69.76, size: 760, kind: "galaxy", tint: "#c8c2d8", stretch: 1.5, angle: 0.3 },
   { id: "smc", label: "Small Magellanic Cloud", raDeg: 13.16, decDeg: -72.8, size: 420, kind: "galaxy", tint: "#bfb9cf", stretch: 1.4, angle: 1.1 },
@@ -152,6 +152,93 @@ export const METEOR_SHOWERS: MeteorShower[] = [
   { id: "leo", label: "Leonids", raDeg: 152, decDeg: 22, from: [11, 6], to: [11, 30], peak: "Nov 17" },
   { id: "gem", label: "Geminids", raDeg: 112, decDeg: 33, from: [12, 4], to: [12, 17], peak: "Dec 14" },
 ];
+
+// ---------------------------------------------------------------------------
+// Historical supernovae: real Milky Way events with dated light curves.
+// Jump the time machine to the peak date and watch a star die where humans
+// actually watched it happen; afterwards the remnant nebula stays in the sky
+// (the Crab Nebula from SN 1054 is still there today, still expanding).
+
+export interface SupernovaEvent {
+  id: string;
+  label: string;
+  raDeg: number;
+  decDeg: number;
+  /** first light, ms since epoch (proleptic Gregorian is fine here) */
+  startMs: number;
+  /** days from first light to peak brightness */
+  riseDays: number;
+  /** e-folding decay time after peak, days */
+  decayDays: number;
+  /** apparent size of the flash at peak, scene units on the sky shell */
+  peakSize: number;
+  remnant?: {
+    label: string;
+    tint: string;
+    /** remnant size today, scene units */
+    size: number;
+    /** does it host a visible pulsar? (Crab) */
+    pulsar?: boolean;
+  };
+}
+
+export const SUPERNOVAE: SupernovaEvent[] = [
+  {
+    // SN 1054 -- recorded by Chinese astronomers as a "guest star", visible
+    // in daylight for 23 days. Left the Crab Nebula (M1) + Crab Pulsar.
+    id: "sn1054",
+    label: "SN 1054",
+    raDeg: 83.63,
+    decDeg: 22.01,
+    startMs: Date.UTC(1054, 6, 4),
+    riseDays: 5,
+    decayDays: 120,
+    peakSize: 900,
+    remnant: { label: "Crab Nebula (M1)", tint: "#c9a8ff", size: 420, pulsar: true },
+  },
+  {
+    // Tycho's supernova -- as bright as Venus, studied by Tycho Brahe.
+    id: "sn1572",
+    label: "SN 1572 (Tycho)",
+    raDeg: 6.34,
+    decDeg: 64.14,
+    startMs: Date.UTC(1572, 10, 6),
+    riseDays: 6,
+    decayDays: 90,
+    peakSize: 760,
+    remnant: { label: "Tycho's Remnant", tint: "#ff9b8a", size: 300 },
+  },
+  {
+    // Kepler's supernova -- the last one observed inside the Milky Way.
+    id: "sn1604",
+    label: "SN 1604 (Kepler)",
+    raDeg: 262.67,
+    decDeg: -21.49,
+    startMs: Date.UTC(1604, 9, 9),
+    riseDays: 7,
+    decayDays: 100,
+    peakSize: 760,
+    remnant: { label: "Kepler's Remnant", tint: "#ffc98a", size: 280 },
+  },
+];
+
+/** flash brightness envelope 0..1 at a sim time (0 before start / after fade) */
+export function supernovaEnvelope(sn: SupernovaEvent, timeMs: number): number {
+  const days = (timeMs - sn.startMs) / 86400000;
+  if (days <= 0) return 0;
+  if (days < sn.riseDays) {
+    const t = days / sn.riseDays;
+    return t * t * (3 - 2 * t); // smooth rise
+  }
+  return Math.exp(-(days - sn.riseDays) / sn.decayDays);
+}
+
+/** remnant visibility 0..1: fades in over ~50 years after the explosion */
+export function remnantEnvelope(sn: SupernovaEvent, timeMs: number): number {
+  const years = (timeMs - sn.startMs) / (365.25 * 86400000);
+  if (years <= 1) return 0;
+  return Math.min(1, (years - 1) / 50);
+}
 
 /** is a shower active at the given sim time (UTC month/day window, wraps NYE) */
 export function showerActive(s: MeteorShower, timeMs: number): boolean {
