@@ -5,6 +5,8 @@ import { getSimNow, useStore } from "../store/useStore";
 import { CATEGORY_COLOR, CATEGORY_LABEL } from "../lib/constants";
 import { fmtDeg, fmtKm, fmtLatLon, fmtPeriod, fmtSpeed } from "../lib/format";
 import type { LiveSample } from "../lib/types";
+import { modulateFromTelemetry, playCue } from "../lib/audio";
+import { GroundMap } from "./GroundMap";
 
 export function InfoPanel() {
   const selectedIndex = useStore((s) => s.selectedIndex);
@@ -12,14 +14,19 @@ export function InfoPanel() {
   const follow = useStore((s) => s.follow);
   const setFollow = useStore((s) => s.setFollow);
   const clearSelection = useStore((s) => s.clearSelection);
+  const showGroundTrack = useStore((s) => s.showGroundTrack);
+  const toggleGroundTrack = useStore((s) => s.toggleGroundTrack);
 
   const [live, setLive] = useState<LiveSample | null>(null);
   const panelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (selectedIndex < 0) return;
+    playCue("select");
     const id = setInterval(() => {
-      setLive(engine.liveSample(selectedIndex, getSimNow()));
+      const sample = engine.liveSample(selectedIndex, getSimNow());
+      setLive(sample);
+      if (sample) modulateFromTelemetry(sample.altitudeKm, sample.speedKmS);
     }, 250);
     return () => clearInterval(id);
   }, [selectedIndex]);
@@ -91,12 +98,26 @@ export function InfoPanel() {
         )}
       </dl>
 
-      <button
-        className={`follow-btn ${follow ? "follow-on" : ""}`}
-        onClick={() => setFollow(!follow)}
-      >
-        {follow ? "■ STOP FOLLOWING" : "▶ FOLLOW CAMERA"}
-      </button>
+      <GroundMap
+        selectedIndex={selectedIndex}
+        periodMin={meta.periodMin}
+        color={color}
+      />
+
+      <div className="info-actions">
+        <button
+          className={`follow-btn ${follow ? "follow-on" : ""}`}
+          onClick={() => setFollow(!follow)}
+        >
+          {follow ? "■ STOP FOLLOWING" : "▶ FOLLOW CAMERA"}
+        </button>
+        <button
+          className={`follow-btn track-btn ${showGroundTrack ? "follow-on" : ""}`}
+          onClick={toggleGroundTrack}
+        >
+          {showGroundTrack ? "◎ GROUND TRACK ON" : "○ GROUND TRACK"}
+        </button>
+      </div>
     </aside>
   );
 }

@@ -29,6 +29,15 @@ export function ControlsHelp() {
               <li><kbd>Q / E</kbd><span>descend / rise</span></li>
             </ul>
           </div>
+          <div className="controls-section">
+            <div className="controls-head">Features</div>
+            <ul>
+              <li><kbd>C</kbd><span>true-scale compare</span></li>
+              <li><span className="controls-plain">Density</span><span>orbit shell heatmap</span></li>
+              <li><span className="controls-plain">Mesh</span><span>Starlink links</span></li>
+              <li><span className="controls-plain">Track</span><span>sat path + footprint</span></li>
+            </ul>
+          </div>
         </div>
       )}
       <button
