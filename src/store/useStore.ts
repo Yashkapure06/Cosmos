@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { CATEGORY_ORDER, type Category } from "../lib/constants";
 import type { BodyId } from "../lib/bodies";
 import type { SatMeta } from "../lib/types";
+import type { QualityTier } from "../lib/quality";
+import { playCue } from "../lib/audio";
 
 export type LoadStage = "idle" | "fetching" | "initializing" | "ready" | "error";
 
@@ -44,6 +46,22 @@ interface OrbitStore {
   // constellation figures + zodiac + ecliptic visibility
   showConstellations: boolean;
 
+  // sat ground track + footprint
+  showGroundTrack: boolean;
+
+  // sat density heatmap + Starlink mesh
+  showHeatmap: boolean;
+  showSatLinks: boolean;
+
+  // true-scale body compare overlay
+  compareMode: boolean;
+
+  // procedural space audio
+  audioMuted: boolean;
+
+  // adaptive quality (mirrored from monitor for HUD)
+  qualityTier: QualityTier;
+
   // time machine
   time: TimeState;
 
@@ -60,6 +78,12 @@ interface OrbitStore {
   toggleFlyMode: () => void;
   toggleLabels: () => void;
   toggleConstellations: () => void;
+  toggleGroundTrack: () => void;
+  toggleHeatmap: () => void;
+  toggleSatLinks: () => void;
+  toggleCompareMode: () => void;
+  toggleAudioMuted: () => void;
+  setQualityTier: (tier: QualityTier) => void;
   setSpeed: (speed: number) => void;
   jumpBy: (deltaMs: number) => void;
   goLive: () => void;
@@ -94,6 +118,18 @@ export const useStore = create<OrbitStore>((set, get) => ({
 
   showConstellations: true,
 
+  showGroundTrack: true,
+
+  showHeatmap: false,
+
+  showSatLinks: false,
+
+  compareMode: false,
+
+  audioMuted: true,
+
+  qualityTier: "high",
+
   time: { anchorReal: Date.now(), anchorSim: Date.now(), speed: 1 },
 
   setStage: (stage, error) => set({ stage, error: error ?? null }),
@@ -118,12 +154,25 @@ export const useStore = create<OrbitStore>((set, get) => ({
   select: (index) => set({ selectedIndex: index }),
   clearSelection: () => set({ selectedIndex: -1, follow: false }),
   setFollow: (v) => set({ follow: v }),
-  setFocus: (b) => set({ focus: b, follow: false }),
+  setFocus: (b) => {
+    if (get().focus !== b) playCue("focus");
+    set({ focus: b, follow: false });
+  },
   setSpacecraftReady: () => set({ spacecraftReady: true }),
-  toggleFlyMode: () => set((s) => ({ flyMode: !s.flyMode })),
+  toggleFlyMode: () => {
+    playCue("fly");
+    set((s) => ({ flyMode: !s.flyMode }));
+  },
   toggleLabels: () => set((s) => ({ showLabels: !s.showLabels })),
   toggleConstellations: () =>
     set((s) => ({ showConstellations: !s.showConstellations })),
+  toggleGroundTrack: () =>
+    set((s) => ({ showGroundTrack: !s.showGroundTrack })),
+  toggleHeatmap: () => set((s) => ({ showHeatmap: !s.showHeatmap })),
+  toggleSatLinks: () => set((s) => ({ showSatLinks: !s.showSatLinks })),
+  toggleCompareMode: () => set((s) => ({ compareMode: !s.compareMode })),
+  toggleAudioMuted: () => set((s) => ({ audioMuted: !s.audioMuted })),
+  setQualityTier: (tier) => set({ qualityTier: tier }),
 
   setSpeed: (speed) => {
     const t = get().time;
