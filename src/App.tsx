@@ -14,6 +14,9 @@ import { ControlsHelp } from "./ui/ControlsHelp";
 import { LevelTitle } from "./ui/LevelTitle";
 import { ScaleRuler } from "./ui/ScaleRuler";
 import { LoadingOverlay } from "./ui/LoadingOverlay";
+import { ComparePanel } from "./ui/ComparePanel";
+import { AudioToggle } from "./ui/AudioToggle";
+import { QualityBadge } from "./ui/QualityBadge";
 import { useBootstrap } from "./hooks/useBootstrap";
 
 export default function App() {
@@ -30,12 +33,15 @@ export default function App() {
         <InfoPanel />
         <CraftPanel />
         <BodyPanel />
+        <ComparePanel />
         <TimeControls />
         <TourButton />
         <EventsMenu />
         <ScaleRuler />
         <Ticker />
         <FlyToggle />
+        <AudioToggle />
+        <QualityBadge />
         <ControlsHelp />
       </div>
       <LoadingOverlay />
