@@ -57,6 +57,7 @@ export type BodyId =
   | "alphacenA"
   | "alphacenB"
   | "orionnebula"
+  | "eaglenebula"
   | "voyager1"
   | "voyager2"
   | "newhorizons"
@@ -68,7 +69,9 @@ export type BodyId =
   | "hygiea"
   | "interamnia"
   | "davida"
-  | "blackhole";
+  | "blackhole"
+  | "kepler186"
+  | "kepler186f";
 
 export type BodyType =
   | "star"
@@ -145,6 +148,17 @@ export interface BodyDef {
   rockIndex?: number;
   /** spacecraft only: for the ticker's years-in-flight line */
   launchYear?: number;
+  /** procedural canvas surface (major moons without photo textures) */
+  procSurface?:
+    | "io"
+    | "europa"
+    | "ganymede"
+    | "callisto"
+    | "titan"
+    | "enceladus"
+    | "iapetus"
+    | "triton"
+    | "miranda";
 }
 
 const KM = 1 / EARTH_RADIUS_KM;
@@ -302,6 +316,9 @@ export const BODIES: Record<BodyId, BodyDef> = {
     parent: "jupiter",
     radius: 1821.6 * KM,
     color: "#d8b520",
+    procSurface: "io",
+    rotationHours: 42.46,
+    rim: "#ffcc44",
   },
   europa: {
     id: "europa",
@@ -310,6 +327,9 @@ export const BODIES: Record<BodyId, BodyDef> = {
     parent: "jupiter",
     radius: 1560.8 * KM,
     color: "#c9b8a4",
+    procSurface: "europa",
+    rotationHours: 85.2,
+    rim: "#e8ddd0",
   },
   ganymede: {
     id: "ganymede",
@@ -318,6 +338,9 @@ export const BODIES: Record<BodyId, BodyDef> = {
     parent: "jupiter",
     radius: 2634.1 * KM,
     color: "#9a8d7d",
+    procSurface: "ganymede",
+    rotationHours: 171.7,
+    rim: "#c4b8a8",
   },
   callisto: {
     id: "callisto",
@@ -326,6 +349,9 @@ export const BODIES: Record<BodyId, BodyDef> = {
     parent: "jupiter",
     radius: 2410.3 * KM,
     color: "#6e6459",
+    procSurface: "callisto",
+    rotationHours: 400.5,
+    rim: "#8a7e72",
   },
   saturn: {
     id: "saturn",
@@ -357,6 +383,9 @@ export const BODIES: Record<BodyId, BodyDef> = {
     parent: "saturn",
     radius: 252.1 * KM,
     color: "#e8ecec",
+    procSurface: "enceladus",
+    rotationHours: 32.9,
+    rim: "#ffffff",
     approxOrbit: { aKm: 238042, periodDays: 1.37, phase: 2.1 },
   },
   tethys: {
@@ -393,6 +422,9 @@ export const BODIES: Record<BodyId, BodyDef> = {
     parent: "saturn",
     radius: 2574.7 * KM,
     color: "#d9a441",
+    procSurface: "titan",
+    rotationHours: 382.7,
+    rim: "#e8b860",
     approxOrbit: { aKm: 1221870, periodDays: 15.945, phase: 1.9 },
   },
   hyperion: {
@@ -412,6 +444,8 @@ export const BODIES: Record<BodyId, BodyDef> = {
     parent: "saturn",
     radius: 734.5 * KM,
     color: "#8f8578",
+    procSurface: "iapetus",
+    rotationHours: 1904,
     approxOrbit: { aKm: 3560840, periodDays: 79.33, phase: 4.2 },
   },
   phoebe: {
@@ -464,6 +498,8 @@ export const BODIES: Record<BodyId, BodyDef> = {
     parent: "uranus",
     radius: 235.8 * KM,
     color: "#c5c9c7",
+    procSurface: "miranda",
+    rotationHours: 33.92,
     approxOrbit: { aKm: 129390, periodDays: 1.4135, phase: 0.9 },
   },
   ariel: {
@@ -535,6 +571,9 @@ export const BODIES: Record<BodyId, BodyDef> = {
     parent: "neptune",
     radius: 1353.4 * KM,
     color: "#cbd4d8",
+    procSurface: "triton",
+    rotationHours: 141.0,
+    rim: "#dce8ec",
     approxOrbit: { aKm: 354759, periodDays: -5.877, phase: 2.8 },
   },
 
@@ -857,6 +896,43 @@ export const BODIES: Record<BodyId, BodyDef> = {
     radius: 45000, // cloud half-extent, scene units
     color: "#e88ab0",
     fixedHelioUnits: fixedAt(83.82, -5.39, 4_500_000),
+  },
+
+  // Pillars of Creation — Eagle Nebula (M16), compressed like Orion
+  eaglenebula: {
+    id: "eaglenebula",
+    label: "Eagle Nebula",
+    type: "nebula",
+    parent: "sun",
+    radius: 38000,
+    color: "#ff7a90",
+    fixedHelioUnits: fixedAt(274.7, -13.8, 5_200_000),
+  },
+
+  // Kepler-186 (560 ly, M1V): five planets; f is the first Earth-size world
+  // found in a habitable zone around another star.
+  kepler186: {
+    id: "kepler186",
+    label: "Kepler-186",
+    type: "star",
+    parent: "sun",
+    radius: 361000 * KM, // ~0.52 R_sun
+    color: "#ff9a6e",
+    poleRaDeg: 298.65,
+    poleDecDeg: 43.95,
+    rotationHours: 800,
+    fixedHelioUnits: fixedAt(298.65, 43.95, 14_000_000),
+  },
+  kepler186f: {
+    id: "kepler186f",
+    label: "Kepler-186f",
+    type: "planet",
+    parent: "kepler186",
+    radius: 7100 * KM,
+    color: "#5a8f6e",
+    rim: "#7aaf8e",
+    rotationHours: 311.5,
+    approxOrbit: { aKm: 53_000_000, periodDays: 129.9, phase: 2.4 },
   },
 
   // A visitable black hole, pinned in the direction of Sagittarius A*. Fly to
