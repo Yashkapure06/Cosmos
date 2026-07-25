@@ -8,6 +8,8 @@ import { useTexture } from "@react-three/drei";
 import { gstime } from "satellite.js";
 import { getSimNow } from "../store/useStore";
 import { sunDirectionScene } from "../lib/sun";
+import { quality } from "../lib/quality";
+import { frames } from "./frames";
 
 const EARTH_VERT = /* glsl */ `
   #include <common>
@@ -166,6 +168,8 @@ export function Earth() {
 
   const earthRef = useRef<THREE.Mesh>(null);
   const cloudRef = useRef<THREE.Mesh>(null);
+  const atmoRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
 
   const sunUniform = useMemo(() => ({ value: new THREE.Vector3(1, 0, 0) }), []);
 
@@ -187,7 +191,7 @@ export function Earth() {
 
   const atmoUniforms = useMemo(() => ({ uSunDir: sunUniform }), [sunUniform]);
 
-  useFrame(() => {
+  useFrame(({ camera }) => {
     const simNow = getSimNow();
     const [sx, sy, sz] = sunDirectionScene(simNow);
     sunUniform.value.set(sx, sy, sz);
@@ -197,10 +201,16 @@ export function Earth() {
     // clouds share Earth's rotation plus a slow westerly drift
     if (cloudRef.current)
       cloudRef.current.rotation.y = gmst + (simNow / 1000) * 0.0000105;
+
+    // distance LOD: drop clouds / thin atmo when far or quality low
+    const dist = camera.position.distanceTo(frames.earthOffset);
+    const near = dist < 120 * (0.5 + quality.earthDetail * 0.5);
+    if (cloudRef.current) cloudRef.current.visible = near && quality.earthDetail > 0.45;
+    if (atmoRef.current) atmoRef.current.visible = dist < 400;
   });
 
   return (
-    <group>
+    <group ref={groupRef}>
       <mesh ref={earthRef}>
         <sphereGeometry args={[1, 128, 128]} />
         <shaderMaterial
@@ -221,7 +231,7 @@ export function Earth() {
         />
       </mesh>
 
-      <mesh>
+      <mesh ref={atmoRef}>
         <sphereGeometry args={[1.045, 96, 96]} />
         <shaderMaterial
           uniforms={atmoUniforms}

@@ -16,6 +16,7 @@ import {
 } from "../lib/bodies";
 import { EARTH_RADIUS_KM } from "../lib/constants";
 import { poleVectorScene } from "../lib/ephemeris";
+import { makeProcSurface } from "../lib/procMaps";
 import { getSimNow } from "../store/useStore";
 import { helio, offsetOf } from "./frames";
 
@@ -173,7 +174,17 @@ function BodyMesh({ def }: { def: BodyDef }) {
     uSunDirLocal: { value: THREE.Vector3 };
   } | null>(null);
 
-  const map = useTexture(def.texture ? `/textures/${def.texture}` : "/textures/2k_uranus.jpg");
+  // Photo map OR procedural moon surface OR flat color fallback texture
+  const fileMap = useTexture(
+    def.texture ? `/textures/${def.texture}` : "/textures/2k_uranus.jpg",
+  );
+  const procMap = useMemo(
+    () => (def.procSurface ? makeProcSurface(def.procSurface) : null),
+    [def.procSurface],
+  );
+  const map = procMap ?? fileMap;
+  const hasMap = !!(def.texture || def.procSurface);
+
   useMemo(() => {
     map.colorSpace = THREE.SRGBColorSpace;
     map.anisotropy = 8;
@@ -188,13 +199,13 @@ function BodyMesh({ def }: { def: BodyDef }) {
   const uniforms = useMemo(
     () => ({
       uMap: { value: map },
-      uHasMap: { value: def.texture ? 1 : 0 },
+      uHasMap: { value: hasMap ? 1 : 0 },
       uColor: { value: new THREE.Color(def.color) },
       uSunDir: { value: new THREE.Vector3(1, 0, 0) },
       uRimColor: { value: new THREE.Color(def.rim ?? "#ffffff") },
       uRimStrength: { value: def.rim ? 0.55 : 0.12 },
     }),
-    [map, def],
+    [map, hasMap, def],
   );
 
   const ring = useMemo(() => {

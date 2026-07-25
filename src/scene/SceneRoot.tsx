@@ -26,8 +26,15 @@ import { RemoteStars } from "./RemoteStars";
 import { BlackHole } from "./BlackHole";
 import { Satellites } from "./Satellites";
 import { SelectedSatellite } from "./SelectedSatellite";
+import { GroundTrack } from "./GroundTrack";
+import { SatHeatmap } from "./SatHeatmap";
+import { StarlinkLinks } from "./StarlinkLinks";
+import { Aurora } from "./Aurora";
+import { MoonJets } from "./MoonJets";
+import { EagleNebula } from "./EagleNebula";
 import { CameraRig } from "./CameraRig";
 import { Picker } from "./Picker";
+import { QualityMonitor } from "./QualityMonitor";
 import { EarthFrame, FrameDriver, ScrollNavigator } from "./FocusSystem";
 
 export function SceneRoot() {
@@ -45,6 +52,7 @@ export function SceneRoot() {
       }}
     >
       <FrameDriver />
+      <QualityMonitor />
       <SunLight />
       <Suspense fallback={null}>
         <StarField />
@@ -55,6 +63,7 @@ export function SceneRoot() {
         <Supernovae />
         <Galaxy />
         <OrionNursery />
+        <EagleNebula />
         <BlackHole />
         <Sun />
         <RemoteStars />
@@ -66,11 +75,16 @@ export function SceneRoot() {
         <KuiperBelt />
         <OortCloud />
         <EclipseShadows />
+        <MoonJets />
         <EarthFrame>
           <Earth />
+          <Aurora />
           <Moon />
           <Satellites />
+          <SatHeatmap />
+          <StarlinkLinks />
           <SelectedSatellite />
+          <GroundTrack />
         </EarthFrame>
         <Spacecraft />
         <Markers />

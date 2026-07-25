@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import { getSimNow } from "../store/useStore";
+import { quality } from "../lib/quality";
 import { helio, frames, offsetOf } from "./frames";
 import {
   asteroidPositionUnits,
@@ -286,8 +287,13 @@ function LocalDebris({ materials }: { materials: THREE.MeshStandardMaterial[] })
       p[j + 1] = b[j + 1] + Math.round((cam.y - b[j + 1]) / LOCAL_CELL) * LOCAL_CELL;
       p[j + 2] = b[j + 2] + Math.round((cam.z - b[j + 2]) / LOCAL_CELL) * LOCAL_CELL;
     }
-    if (ptsGeomRef.current)
+    if (ptsGeomRef.current) {
       (ptsGeomRef.current.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+      ptsGeomRef.current.setDrawRange(
+        0,
+        Math.max(400, Math.floor(LOCAL_PTS * quality.particleScale)),
+      );
+    }
     uniforms.uAlpha.value = bf;
 
     // wrap + fade + tumble the chunky boulders
@@ -487,8 +493,11 @@ export function AsteroidBelt() {
       }
     }
 
+    const drawN = Math.max(500, Math.floor(COUNT * quality.particleScale));
     for (const g of [dustGeomRef.current, glowGeomRef.current]) {
-      if (g) (g.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+      if (!g) continue;
+      (g.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+      g.setDrawRange(0, drawN);
     }
   });
 

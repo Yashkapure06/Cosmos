@@ -8,6 +8,7 @@
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
+import { quality } from "../lib/quality";
 import { offsetOf } from "./frames";
 
 // direction of the galactic centre (Sgr A*), EQJ RA/Dec -> scene
@@ -232,6 +233,8 @@ export function Galaxy() {
         0.4,
         THREE.MathUtils.smoothstep(d, 1_200_000, 3_400_000),
       );
+    // adaptive particle budget
+    geometry.setDrawRange(0, Math.max(2000, Math.floor(COUNT * quality.particleScale)));
   });
 
   return (

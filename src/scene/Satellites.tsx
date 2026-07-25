@@ -7,6 +7,7 @@ import { useFrame } from "@react-three/fiber";
 import { engine } from "../engine/SatelliteEngine";
 import { getSimNow, useStore } from "../store/useStore";
 import { CATEGORY_COLOR, type Category } from "../lib/constants";
+import { quality } from "../lib/quality";
 
 const VERT = /* glsl */ `
   #include <common>
@@ -18,17 +19,20 @@ const VERT = /* glsl */ `
 
   uniform float uDt;
   uniform float uPixelRatio;
+  uniform float uGlow;
 
   varying vec3 vColor;
   varying float vVisible;
+  varying float vGlow;
 
   void main() {
     vec3 p = position + aVel * uDt;
     vColor = aColor;
     vVisible = aVisible;
+    vGlow = uGlow;
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
-    float size = aSize * uPixelRatio * 5.2 / -mv.z;
-    gl_PointSize = clamp(size, 1.2, 26.0) * aVisible;
+    float size = aSize * uPixelRatio * (5.2 + uGlow * 1.4) / -mv.z;
+    gl_PointSize = clamp(size, 1.2, 28.0) * aVisible;
     gl_Position = projectionMatrix * mv;
     #include <logdepthbuf_vertex>
   }
@@ -39,6 +43,7 @@ const FRAG = /* glsl */ `
   #include <logdepthbuf_pars_fragment>
   varying vec3 vColor;
   varying float vVisible;
+  varying float vGlow;
 
   void main() {
     #include <logdepthbuf_fragment>
@@ -47,7 +52,7 @@ const FRAG = /* glsl */ `
     float d = length(c);
     if (d > 0.5) discard;
     float core = smoothstep(0.5, 0.12, d);
-    float halo = smoothstep(0.5, 0.0, d) * 0.35;
+    float halo = smoothstep(0.5, 0.0, d) * (0.32 + vGlow * 0.28);
     gl_FragColor = vec4(vColor * (0.55 + core), core * 0.95 + halo);
   }
 `;
@@ -74,6 +79,7 @@ export function Satellites() {
     () => ({
       uDt: { value: 0 },
       uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
+      uGlow: { value: 1 },
     }),
     [],
   );
@@ -135,8 +141,10 @@ export function Satellites() {
   }, [count]);
 
   useFrame(() => {
-    if (matRef.current)
-      matRef.current.uniforms.uDt.value = engine.dtSeconds(getSimNow());
+    if (!matRef.current) return;
+    matRef.current.uniforms.uDt.value = engine.dtSeconds(getSimNow());
+    matRef.current.uniforms.uGlow.value = quality.glow ? 1 : 0;
+    matRef.current.uniforms.uPixelRatio.value = quality.dpr;
   });
 
   if (count === 0) return null;
