@@ -6,8 +6,8 @@
   "repository": "https://github.com/YOUR_USERNAME/cosmos",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "node init && vite",
+    "build": "node init && tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -16,7 +16,9 @@
     "@react-three/drei": "^10.0.6",
     "@react-three/fiber": "^9.1.2",
     "astronomy-engine": "^2.1.19",
+    "dotenv": "^8.2.0",
     "gsap": "^3.13.0",
+    "node-fetch": "^3.3.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "satellite.js": "^6.0.0",
