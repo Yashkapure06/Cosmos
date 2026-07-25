@@ -8,9 +8,10 @@ import { nav } from "../scene/nav";
 import { useStore } from "../store/useStore";
 
 const STOPS: BodyId[] = [
-  "moon", "mars", "ceres", "jupiter", "io", "saturn", "titan",
-  "uranus", "neptune", "pluto", "halley", "sun", "blackhole",
-  "trappist1", "trappist1e", "proxima", "alphacenA", "earth",
+  "moon", "mars", "ceres", "jupiter", "io", "europa", "saturn", "enceladus", "titan",
+  "uranus", "neptune", "pluto", "halley", "sun", "orionnebula", "eaglenebula",
+  "blackhole", "trappist1", "trappist1e", "kepler186", "kepler186f", "proxima",
+  "alphacenA", "earth",
 ];
 
 const DWELL_MS = 11_000; // flight (up to ~6 s) + a few seconds to look around
